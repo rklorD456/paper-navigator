@@ -221,6 +221,25 @@ class UserSession(Base):
             (now - self.last_active).total_seconds() > SESSION_CONFIG["INACTIVITY_TIMEOUT_MINUTES"] * 60
         )
 
+class PaperCollection(Base):
+    __tablename__ = "paper_collections"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(Text)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(String)  # ISO format timestamp
+    papers = Column(Text, default="[]")  # JSON string of paper IDs
+    
+    def get_papers(self) -> List[int]:
+        try:
+            return json.loads(self.papers)
+        except:
+            return []
+    
+    def set_papers(self, paper_ids: List[int]):
+        self.papers = json.dumps(paper_ids)
+
 # --- Pydantic Models ---
 class TokenData(BaseModel):
     email: Optional[str] = None
@@ -1253,6 +1272,113 @@ async def forgot_password_page(request: Request):
     return templates.TemplateResponse("forgot_password.html", {
         "request": request
     })
+
+@app.post("/api/collections")
+async def create_collection(
+    name: str = Form(...),
+    description: str = Form(""),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    collection = PaperCollection(
+        name=name,
+        description=description,
+        user_id=current_user.id,
+        created_at=datetime.utcnow().isoformat()
+    )
+    
+    db.add(collection)
+    db.commit()
+    db.refresh(collection)
+    
+    return {
+        "id": collection.id,
+        "name": collection.name,
+        "description": collection.description,
+        "created_at": collection.created_at
+    }
+
+@app.get("/api/collections")
+async def get_collections(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    collections = db.query(PaperCollection).filter(
+        PaperCollection.user_id == current_user.id
+    ).all()
+    
+    return [
+        {
+            "id": c.id,
+            "name": c.name,
+            "description": c.description,
+            "created_at": c.created_at,
+            "paper_count": len(c.get_papers())
+        }
+        for c in collections
+    ]
+
+@app.post("/api/collections/{collection_id}/papers")
+async def add_paper_to_collection(
+    collection_id: int,
+    paper_id: int = Form(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    collection = db.query(PaperCollection).filter(
+        PaperCollection.id == collection_id,
+        PaperCollection.user_id == current_user.id
+    ).first()
+    
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    
+    paper = db.query(Paper).filter(Paper.id == paper_id).first()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    papers = collection.get_papers()
+    if paper_id not in papers:
+        papers.append(paper_id)
+        collection.set_papers(papers)
+        db.commit()
+    
+    return {"message": "Paper added to collection"}
+
+@app.delete("/api/collections/{collection_id}/papers/{paper_id}")
+async def remove_paper_from_collection(
+    collection_id: int,
+    paper_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    collection = db.query(PaperCollection).filter(
+        PaperCollection.id == collection_id,
+        PaperCollection.user_id == current_user.id
+    ).first()
+    
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    
+    papers = collection.get_papers()
+    if paper_id in papers:
+        papers.remove(paper_id)
+        collection.set_papers(papers)
+        db.commit()
+    
+    return {"message": "Paper removed from collection"}
 
 # --- Application Startup ---
 @app.on_event("startup")

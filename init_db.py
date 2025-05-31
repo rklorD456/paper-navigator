@@ -1,17 +1,80 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, Float, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 from main import Base, User, UserProfile, Paper
 from passlib.context import CryptContext
 import json
 from datetime import datetime
+import os
 
 # Initialize password hasher
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Database setup
-SQLALCHEMY_DATABASE_URL = "sqlite:///./papers.db"
+# Create database directory if it doesn't exist
+os.makedirs("data", exist_ok=True)
+
+# Create SQLite database
+SQLALCHEMY_DATABASE_URL = "sqlite:///data/papers.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Define models
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(String)  # ISO format timestamp
+    preferences = Column(Text, default="{}")  # JSON string of user preferences
+    
+    def get_preferences(self) -> dict:
+        try:
+            return json.loads(self.preferences)
+        except:
+            return {}
+    
+    def set_preferences(self, prefs: dict):
+        self.preferences = json.dumps(prefs)
+
+class Paper(Base):
+    __tablename__ = "papers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    authors = Column(String)
+    abstract = Column(Text)
+    url = Column(String)
+    pdf_url = Column(String)
+    published_date = Column(String)
+    added_date = Column(String)  # ISO format timestamp
+    reading_status = Column(String, default="unread")  # unread, reading, completed
+    user_notes = Column(Text, default="")
+    key_takeaways = Column(Text, default="")
+    citation_count = Column(Integer, default=0)
+    user_id = Column(Integer, ForeignKey("users.id"))
+
+class PaperCollection(Base):
+    __tablename__ = "paper_collections"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(Text)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(String)  # ISO format timestamp
+    papers = Column(Text, default="[]")  # JSON string of paper IDs
+    
+    def get_papers(self) -> list:
+        try:
+            return json.loads(self.papers)
+        except:
+            return []
+    
+    def set_papers(self, paper_ids: list):
+        self.papers = json.dumps(paper_ids)
 
 def init_db():
     # Create all tables

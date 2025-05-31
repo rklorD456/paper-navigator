@@ -24,7 +24,7 @@ A web application for managing and organizing academic papers, built with FastAP
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/paper-navigator.git
+git clone https://github.com/rklorD456/paper-navigator.git
 cd paper-navigator
 ```
 
