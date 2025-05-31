@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Personalized ML Paper Navigator{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-800 dark:from-primary-900 dark:to-primary-950 rounded-2xl shadow-xl">
+        <div class="absolute inset-0 bg-grid-white/[0.05] bg-grid-pattern"></div>
+        <div class="relative px-6 py-16 sm:px-12 sm:py-24 lg:py-32">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                    Welcome to Paper Navigator
+                </h1>
+                <p class="mt-6 text-lg leading-8 text-primary-100 max-w-3xl mx-auto">
+                    Your personalized ML paper recommendation system. Discover relevant papers, track your reading progress, and build your knowledge base.
+                </p>
+                <div class="mt-10 flex items-center justify-center gap-x-6">
+                    <a href="/recommendations" class="rounded-md bg-white px-6 py-3 text-sm font-semibold text-primary-600 shadow-sm hover:bg-primary-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-all duration-200">
+                        Get Started
+                    </a>
+                    <a href="/papers" class="text-sm font-semibold leading-6 text-white hover:text-primary-100 transition-colors duration-200">
+                        Browse Papers <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid md:grid-cols-2 gap-6">
+        <a href="/recommendations" class="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-primary-100 dark:bg-primary-900 p-3 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-lightbulb text-2xl text-primary-600 dark:text-primary-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">Get Recommendations</h2>
+                        <p class="text-gray-600 dark:text-gray-300 mt-1">Discover papers tailored to your interests and reading history.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <a href="/papers" class="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-green-100 dark:bg-green-900 p-3 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-book text-2xl text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-200">Browse All Papers</h2>
+                        <p class="text-gray-600 dark:text-gray-300 mt-1">View and filter through your entire paper collection.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Your Reading Statistics</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="text-center p-4 rounded-lg bg-primary-50 dark:bg-primary-900/30">
+                <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">{{ total_papers }}</div>
+                <div class="text-gray-600 dark:text-gray-300">Total Papers</div>
+            </div>
+            <div class="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/30">
+                <div class="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">{{ helpful_count }}</div>
+                <div class="text-gray-600 dark:text-gray-300">Helpful Papers</div>
+            </div>
+            <div class="text-center p-4 rounded-lg bg-red-50 dark:bg-red-900/30">
+                <div class="text-4xl font-bold text-red-600 dark:text-red-400 mb-2">{{ not_relevant_count }}</div>
+                <div class="text-gray-600 dark:text-gray-300">Not Relevant</div>
+            </div>
+        </div>
+    </div>
+
+    {% if top_keywords %}
+    <!-- Keywords Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Your Top Keywords</h2>
+        <div class="flex flex-wrap gap-2">
+            {% for keyword in top_keywords %}
+            <span class="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors duration-200">
+                {{ keyword }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.bg-grid-pattern {
+    background-size: 40px 40px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+}
+</style>
+{% endblock %}

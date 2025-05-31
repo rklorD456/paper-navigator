@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized ML Paper Navigator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Personalized ML Paper Navigator</h1>
+            <p class="text-gray-600">Discover papers tailored to your research interests</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <main>
+            <!-- Loading State -->
+            <div id="loading" class="hidden">
+                <div class="flex justify-center items-center py-12">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-container" class="hidden">
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">Error!</strong>
+                    <span id="error-message" class="block sm:inline"></span>
+                    <button id="retry-button" class="btn btn-danger mt-2">
+                        Retry
+                    </button>
+                </div>
+            </div>
+
+            <!-- No Papers State -->
+            <div id="no-papers" class="hidden text-center py-12">
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">Congratulations! 🎉</strong>
+                    <p class="block sm:inline"> You've reviewed all available papers. Check back later for new recommendations!</p>
+                </div>
+            </div>
+
+            <!-- Paper Display Area -->
+            <div id="paper-container" class="paper-card animate-slide-in">
+                <div id="paper-content">
+                    <!-- Paper content will be dynamically inserted here -->
+                </div>
+
+                <!-- Rating Section -->
+                <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="rate-helpful" class="btn btn-success">
+                        <i class="fas fa-thumbs-up"></i>
+                        Helpful
+                        <span class="keyboard-shortcut">(1)</span>
+                    </button>
+                    <button id="rate-not-relevant" class="btn btn-danger">
+                        <i class="fas fa-thumbs-down"></i>
+                        Not Relevant
+                        <span class="keyboard-shortcut">(2)</span>
+                    </button>
+                    <button id="skip-paper" class="btn btn-gray">
+                        <i class="fas fa-forward"></i>
+                        Skip
+                        <span class="keyboard-shortcut">(3)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback Message -->
+            <div id="feedback-message" class="hidden feedback-message feedback-success">
+                Rating saved!
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 

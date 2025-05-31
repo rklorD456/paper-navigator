@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Paper Navigator{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <nav class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-gray-800 dark:text-white flex items-center space-x-2">
+                        <i class="fas fa-book-open text-primary-600"></i>
+                        <span>Paper Navigator</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <div class="hidden sm:flex sm:items-center sm:space-x-8">
+                        <a href="/" class="border-b-2 {% if request.url.path == '/' %}border-primary-500 text-gray-900 dark:text-white{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300{% endif %} inline-flex items-center px-1 pt-1 text-sm font-medium">Home</a>
+                        <a href="/recommendations" class="border-b-2 {% if request.url.path == '/recommendations' %}border-primary-500 text-gray-900 dark:text-white{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300{% endif %} inline-flex items-center px-1 pt-1 text-sm font-medium">Recommendations</a>
+                        <a href="/papers" class="border-b-2 {% if request.url.path == '/papers' %}border-primary-500 text-gray-900 dark:text-white{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300{% endif %} inline-flex items-center px-1 pt-1 text-sm font-medium">All Papers</a>
+                        <button onclick="showLogoutModal()" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="showSessionModal()" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300 ml-4">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </button>
+                    <button class="sm:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" id="mobile-menu-button">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu -->
+            <div class="sm:hidden hidden" id="mobile-menu">
+                <div class="pt-2 pb-3 space-y-1">
+                    <a href="/" class="block px-3 py-2 rounded-md text-base font-medium {% if request.url.path == '/' %}bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-primary-300{% else %}text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">Home</a>
+                    <a href="/recommendations" class="block px-3 py-2 rounded-md text-base font-medium {% if request.url.path == '/recommendations' %}bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-primary-300{% else %}text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">Recommendations</a>
+                    <a href="/papers" class="block px-3 py-2 rounded-md text-base font-medium {% if request.url.path == '/papers' %}bg-primary-50 dark:bg-primary-900 text-primary-700 dark:text-primary-300{% else %}text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700{% endif %}">All Papers</a>
+                    <button onclick="showLogoutModal()" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="py-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <div id="global-toast" class="fixed top-5 right-5 w-80 z-50"></div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Confirm Logout</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500 dark:text-gray-300">Are you sure you want to log out?</p>
+                </div>
+                <div class="flex justify-center space-x-4 mt-4">
+                    <button onclick="closeLogoutModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="confirmLogout()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Management Modal -->
+    <div id="sessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Active Sessions</h3>
+                    <button onclick="closeSessionModal()" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="mt-2">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Device Details</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">IP Address</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Active</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessionsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                <!-- Sessions will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <button onclick="logoutAllDevices()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Logout All Devices
+                    </button>
+                    <button onclick="closeSessionModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+        });
+
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Logout Modal Functions
+        function showLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+
+        function confirmLogout() {
+            signOut();
+            closeLogoutModal();
+        }
+
+        // Session Management Functions
+        function showSessionModal() {
+            document.getElementById('sessionModal').classList.remove('hidden');
+            loadSessions();
+        }
+
+        function closeSessionModal() {
+            document.getElementById('sessionModal').classList.add('hidden');
+        }
+
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('sessionsTableBody');
+                tbody.innerHTML = '';
+                
+                data.sessions.forEach(session => {
+                    const deviceInfo = session.device_info;
+                    const deviceType = deviceInfo.device.is_mobile ? 'Mobile' : 
+                                     deviceInfo.device.is_tablet ? 'Tablet' : 
+                                     deviceInfo.device.is_pc ? 'Desktop' : 'Unknown';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    ${getDeviceIcon(deviceInfo)}
+                                </div>
+                                <div>
+                                    <div class="font-medium">${deviceInfo.browser.family} ${deviceInfo.browser.version}</div>
+                                    <div class="text-gray-500 dark:text-gray-400">${deviceInfo.os.family} ${deviceInfo.os.version}</div>
+                                    <div class="text-gray-500 dark:text-gray-400">${deviceType}${deviceInfo.device.brand ? ` - ${deviceInfo.device.brand}` : ''}${deviceInfo.device.model ? ` ${deviceInfo.device.model}` : ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${session.ip_address}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                            ${new Date(session.last_active).toLocaleString()}
+                            <div class="text-xs text-gray-400">
+                                ${getTimeAgo(new Date(session.last_active))}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${session.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${session.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                            ${session.is_active ? `
+                                <button onclick="deleteSession(${session.id})" class="text-red-600 hover:text-red-900">
+                                    Deactivate
+                                </button>
+                            ` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                showNotification('Error loading sessions', 'error');
+            }
+        }
+
+        function getDeviceIcon(deviceInfo) {
+            if (deviceInfo.device.is_mobile) {
+                return '<i class="fas fa-mobile-alt text-gray-400 text-xl"></i>';
+            } else if (deviceInfo.device.is_tablet) {
+                return '<i class="fas fa-tablet-alt text-gray-400 text-xl"></i>';
+            } else {
+                return '<i class="fas fa-desktop text-gray-400 text-xl"></i>';
+            }
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + ' years ago';
+            
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + ' months ago';
+            
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + ' days ago';
+            
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + ' hours ago';
+            
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + ' minutes ago';
+            
+            return Math.floor(seconds) + ' seconds ago';
+        }
+
+        async function deleteSession(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showNotification('Session deactivated successfully', 'success');
+                    loadSessions();
+                } else {
+                    throw new Error('Failed to deactivate session');
+                }
+            } catch (error) {
+                console.error('Error deactivating session:', error);
+                showNotification('Error deactivating session', 'error');
+            }
+        }
+
+        async function logoutAllDevices() {
+            try {
+                const response = await fetch('/api/logout-all-devices', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showNotification('Logged out from all devices', 'success');
+                    window.location.href = '/login';
+                } else {
+                    throw new Error('Failed to logout from all devices');
+                }
+            } catch (error) {
+                console.error('Error logging out from all devices:', error);
+                showNotification('Error logging out from all devices', 'error');
+            }
+        }
+
+        // Update the signOut function to show the confirmation modal
+        function signOut() {
+            fetch('/api/logout', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/login';
+                } else {
+                    throw new Error('Logout failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error during logout', 'error');
+            });
+        }
+
+        // Global toast notification functions
+        const toastContainer = document.getElementById('global-toast');
+        const createToast = (message, type = 'success') => {
+            const toast = document.createElement('div');
+            const isSuccess = type === 'success';
+            const bgColor = isSuccess 
+                ? 'bg-green-100 dark:bg-green-900 border-green-400 dark:border-green-700 text-green-700 dark:text-green-300' 
+                : 'bg-red-100 dark:bg-red-900 border-red-400 dark:border-red-700 text-red-700 dark:text-red-300';
+            toast.className = `p-4 mb-2 border rounded-md shadow-lg flex items-center ${bgColor} transition-all duration-300 ease-in-out`;
+            toast.innerHTML = `
+                <span class="flex-1">${message}</span>
+                <button class="ml-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        };
+        window.showSuccess = (message) => createToast(message, 'success');
+        window.showError = (message) => createToast(message, 'error');
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

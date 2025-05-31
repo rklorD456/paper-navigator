@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}All Papers - Paper Navigator{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">All Papers</h1>
+            <p class="mt-1 text-gray-600 dark:text-gray-400">Browse and rate papers in your collection</p>
+        </div>
+        <div class="flex space-x-3">
+            <button id="sort-by-date" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                <i class="fas fa-calendar-alt mr-2"></i>Sort by Date
+            </button>
+            <button id="sort-by-citations" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                <i class="fas fa-quote-right mr-2"></i>Sort by Citations
+            </button>
+        </div>
+    </div>
+
+    <div id="papers-grid" class="space-y-4">
+        {% for paper in papers %}
+        <div class="paper-card bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6" data-paper-id="{{ paper.id }}">
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div class="flex-grow">
+                    <h2 class="text-xl font-semibold mb-2">
+                        <a href="/papers/{{ paper.id }}" class="text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200">{{ paper.title }}</a>
+                    </h2>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                        <span class="paper-year flex items-center"><i class="fas fa-calendar mr-2"></i>{{ paper.year }}</span>
+                        <span class="paper-citations flex items-center"><i class="fas fa-quote-right mr-2"></i>{{ paper.citation_count }} citations</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for keyword in paper.get_keywords() %}
+                        <span class="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300">{{ keyword }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="flex flex-col items-stretch sm:items-end space-y-2 flex-shrink-0 w-full sm:w-auto">
+                    <div class="flex space-x-2 w-full">
+                        <button onclick="ratePaper(this, {{ paper.id }}, 'helpful')" class="rate-btn inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-200 flex-1">
+                            <i class="fas fa-thumbs-up"></i>
+                        </button>
+                        <button onclick="ratePaper(this, {{ paper.id }}, 'not_relevant')" class="rate-btn inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600 transition-colors duration-200 flex-1">
+                            <i class="fas fa-thumbs-down"></i>
+                        </button>
+                    </div>
+                    <a href="{{ paper.url }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 w-full">
+                        <i class="fas fa-external-link-alt mr-2"></i>Read Paper
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ratedPapers = new Set();
+
+function disableRatingButtons(paperCard) {
+    paperCard.querySelectorAll('.rate-btn').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    });
+}
+
+async function ratePaper(button, paperId, rating) {
+    if (ratedPapers.has(paperId)) {
+        window.showError('You have already rated this paper.');
+        return;
+    }
+    
+    const paperCard = button.closest('.paper-card');
+    const buttons = paperCard.querySelectorAll('.rate-btn');
+    buttons.forEach(btn => btn.disabled = true);
+
+    try {
+        const formData = new URLSearchParams({ paper_id: paperId, rating: rating });
+        const response = await fetch('/api/rate-paper', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Failed to submit rating');
+
+        window.showSuccess('Rating submitted successfully!');
+        
+        // Add fade-out animation
+        paperCard.style.opacity = '0';
+        paperCard.style.transform = 'translateY(10px)';
+        
+        // Wait for animation to complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        disableRatingButtons(paperCard);
+        ratedPapers.add(paperId);
+        
+        // Reset animation
+        paperCard.style.opacity = '1';
+        paperCard.style.transform = 'translateY(0)';
+
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        window.showError(error.message);
+        buttons.forEach(btn => btn.disabled = false); // Re-enable on error
+    }
+}
+
+function sortPapers(comparator) {
+    const grid = document.getElementById('papers-grid');
+    const papers = Array.from(grid.querySelectorAll('.paper-card'));
+    
+    // Add fade-out animation to all papers
+    papers.forEach(paper => {
+        paper.style.opacity = '0';
+        paper.style.transform = 'translateY(10px)';
+    });
+    
+    // Sort papers
+    papers.sort(comparator);
+    
+    // Wait for fade-out animation
+    setTimeout(() => {
+        // Reorder papers in DOM
+        papers.forEach(paper => grid.appendChild(paper));
+        
+        // Add fade-in animation
+        papers.forEach((paper, index) => {
+            setTimeout(() => {
+                paper.style.opacity = '1';
+                paper.style.transform = 'translateY(0)';
+            }, index * 50); // Stagger the animations
+        });
+    }, 300);
+}
+
+document.getElementById('sort-by-date').addEventListener('click', () => {
+    sortPapers((a, b) => {
+        const yearA = parseInt(a.querySelector('.paper-year').textContent.trim());
+        const yearB = parseInt(b.querySelector('.paper-year').textContent.trim());
+        return yearB - yearA;
+    });
+});
+
+document.getElementById('sort-by-citations').addEventListener('click', () => {
+    sortPapers((a, b) => {
+        const citationsA = parseInt(a.querySelector('.paper-citations').textContent);
+        const citationsB = parseInt(b.querySelector('.paper-citations').textContent);
+        return citationsB - citationsA;
+    });
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('/api/user-profile');
+        if (!response.ok) throw new Error('Could not load user profile.');
+        
+        const profile = await response.json();
+        const allRated = [...profile.helpful_papers, ...profile.not_relevant_papers];
+        
+        allRated.forEach(id => {
+            ratedPapers.add(id);
+            const card = document.querySelector(`.paper-card[data-paper-id="${id}"]`);
+            if (card) {
+                disableRatingButtons(card);
+            }
+        });
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        window.showError(error.message);
+    }
+});
+</script>
+
+<style>
+.paper-card {
+    transition: all 0.3s ease-out;
+}
+</style>
+{% endblock %}

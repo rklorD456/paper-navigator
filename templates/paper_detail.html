@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ paper.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+        <div class="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ paper.title }}</h1>
+            <div class="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-gray-500 dark:text-gray-400">
+                <span class="flex items-center"><i class="fas fa-users w-5 text-center mr-1"></i>{{ paper.authors }}</span>
+                <span class="flex items-center"><i class="fas fa-calendar w-5 text-center mr-1"></i>{{ paper.year }}</span>
+                <span class="flex items-center"><i class="fas fa-quote-right w-5 text-center mr-1"></i>{{ paper.citation_count }} citations</span>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                {% for keyword in paper.get_keywords() %}
+                <span class="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300">{{ keyword }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Abstract</h2>
+            <p class="text-gray-600 dark:text-gray-300 leading-relaxed">{{ paper.abstract }}</p>
+            <a href="{{ paper.url }}" target="_blank" class="inline-flex items-center px-4 py-2 mt-4 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200">
+                <i class="fas fa-external-link-alt mr-2"></i>Read Full Paper
+            </a>
+        </div>
+    </div>
+
+    <form id="paper-details-form" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-8">
+        <div>
+            <label for="reading-status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reading Status</label>
+            <select id="reading-status" name="reading_status" class="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm">
+                <option value="unread" {% if paper.reading_status == 'unread' %}selected{% endif %}>Unread</option>
+                <option value="reading" {% if paper.reading_status == 'reading' %}selected{% endif %}>In Progress</option>
+                <option value="completed" {% if paper.reading_status == 'completed' %}selected{% endif %}>Completed</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="summary" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">My Summary</label>
+            <textarea id="summary" name="summary" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm" rows="4" placeholder="Write a brief summary in your own words...">{{ paper.summary or '' }}</textarea>
+        </div>
+
+        <div>
+            <h2 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Key Takeaways</h2>
+            <div id="key-takeaways-container" class="space-y-2">
+                {% for takeaway in paper.get_key_takeaways() %}
+                <div class="flex items-center gap-2">
+                    <input type="text" value="{{ takeaway }}" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm takeaway-input">
+                    <button type="button" onclick="removeTakeaway(this)" class="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600 transition-colors duration-200">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="addTakeaway()" class="mt-3 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Add Takeaway
+            </button>
+        </div>
+
+        <div>
+            <label for="reading-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">My Notes</label>
+            <textarea id="reading-notes" name="reading_notes" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm" rows="8" placeholder="Jot down your thoughts, critiques, and questions here...">{{ paper.reading_notes or '' }}</textarea>
+        </div>
+        
+        <div class="pt-5 border-t border-gray-200 dark:border-gray-700 text-right">
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-200">
+                <i class="fas fa-save mr-2"></i>Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addTakeaway() {
+        const container = document.getElementById('key-takeaways-container');
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2';
+        div.innerHTML = `
+            <input type="text" class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm takeaway-input" placeholder="New takeaway...">
+            <button type="button" onclick="removeTakeaway(this)" class="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600 transition-colors duration-200">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(div);
+        
+        // Focus the new input
+        const input = div.querySelector('input');
+        input.focus();
+    }
+
+    function removeTakeaway(button) {
+        const container = button.closest('.flex');
+        container.style.opacity = '0';
+        container.style.transform = 'translateX(10px)';
+        setTimeout(() => container.remove(), 300);
+    }
+
+    async function updatePaperDetails(event) {
+        event.preventDefault();
+        
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+        
+        const takeaways = Array.from(document.querySelectorAll('.takeaway-input'))
+            .map(input => input.value.trim())
+            .filter(value => value);
+
+        const formData = new URLSearchParams({
+            paper_id: '{{ paper.id }}',
+            reading_status: document.getElementById('reading-status').value,
+            summary: document.getElementById('summary').value,
+            reading_notes: document.getElementById('reading-notes').value,
+            key_takeaways: JSON.stringify(takeaways)
+        });
+
+        try {
+            const response = await fetch('/api/update-reading', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.detail || 'Failed to update paper details.');
+            }
+            
+            window.showSuccess('Changes saved successfully!');
+        } catch (error) {
+            console.error('Update error:', error);
+            window.showError(error.message);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    }
+
+    document.getElementById('paper-details-form').addEventListener('submit', updatePaperDetails);
+</script>
+
+<style>
+.takeaway-input {
+    transition: all 0.3s ease-out;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Recommendations - Paper Navigator{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Paper Recommendations</h1>
+        <p class="text-gray-600 dark:text-gray-400">Discover papers tailored to your interests and reading history</p>
+    </div>
+
+    <!-- Fetch New Papers Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Find New Papers</h2>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <input type="text" id="search-query" placeholder="Enter keywords or paper title..." 
+                   class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+            <button id="fetch-papers-btn" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200">
+                <i class="fas fa-search mr-2"></i>Search Papers
+            </button>
+        </div>
+        <div id="fetch-status" class="mt-4 hidden"></div>
+    </div>
+
+    <div id="loading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+        <p class="ml-4 text-gray-600 dark:text-gray-400">Finding a great paper for you...</p>
+    </div>
+
+    <div id="error-container" class="hidden bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+        <i class="fas fa-exclamation-circle text-4xl text-red-500 dark:text-red-400 mb-4"></i>
+        <p class="text-red-700 dark:text-red-300 mb-4" id="error-message">Failed to load recommendation.</p>
+        <button id="retry-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200">
+            <i class="fas fa-redo mr-2"></i>Try Again
+        </button>
+    </div>
+
+    <div id="no-papers" class="hidden bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl p-6 text-center">
+        <i class="fas fa-check-circle text-4xl text-green-500 dark:text-green-400 mb-4"></i>
+        <h2 class="text-2xl font-semibold text-green-800 dark:text-green-300 mb-2">All Caught Up!</h2>
+        <p class="text-green-700 dark:text-green-300 mb-4">You've rated all available papers. Check back later for new ones.</p>
+        <div class="flex justify-center space-x-4">
+            <a href="/papers" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200">
+                <i class="fas fa-list mr-2"></i>View All Papers
+            </a>
+            <button onclick="resetRecommendations()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                <i class="fas fa-sync mr-2"></i>Reset Recommendations
+            </button>
+        </div>
+    </div>
+
+    <div id="paper-container" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 transform transition-all duration-500 ease-out opacity-0 translate-y-4">
+        <div class="flex justify-between items-start mb-4">
+            <h2 id="paper-title" class="text-2xl font-bold text-gray-900 dark:text-white pr-4"></h2>
+            <div class="flex items-center space-x-2 flex-shrink-0">
+                <span id="paper-year" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"></span>
+                <span id="paper-citations" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"></span>
+            </div>
+        </div>
+        <div class="text-gray-600 dark:text-gray-400 mb-4">
+            <i class="fas fa-users mr-2"></i><span id="paper-authors"></span>
+        </div>
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Abstract</h3>
+            <p id="paper-abstract" class="text-gray-700 dark:text-gray-300 leading-relaxed"></p>
+        </div>
+        <div id="paper-keywords" class="flex flex-wrap gap-2 mb-6"></div>
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <a id="paper-url" href="#" target="_blank" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600 transition-colors duration-200 w-full sm:w-auto justify-center">
+                <i class="fas fa-external-link-alt mr-2"></i>Read Full Paper
+            </a>
+            <div class="flex space-x-4">
+                <button id="rate-helpful" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-200">
+                    <i class="fas fa-thumbs-up mr-2"></i>Helpful
+                </button>
+                <button id="rate-not-relevant" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600 transition-colors duration-200">
+                    <i class="fas fa-thumbs-down mr-2"></i>Not Relevant
+                </button>
+                <button id="skip-paper" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                    <i class="fas fa-forward mr-2"></i>Skip
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div id="progress-section" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Progress</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-primary-50 dark:bg-primary-900/30 rounded-lg p-4">
+                <div class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="helpful-count">0</div>
+                <div class="text-gray-600 dark:text-gray-400">Helpful Papers</div>
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
+                <div class="text-2xl font-bold text-red-600 dark:text-red-400" id="not-relevant-count">0</div>
+                <div class="text-gray-600 dark:text-gray-400">Not Relevant</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ui = {
+        paperContainer: document.getElementById('paper-container'),
+        loading: document.getElementById('loading'),
+        error: document.getElementById('error-container'),
+        errorMessage: document.getElementById('error-message'),
+        noPapers: document.getElementById('no-papers'),
+        retryBtn: document.getElementById('retry-btn'),
+        title: document.getElementById('paper-title'),
+        authors: document.getElementById('paper-authors'),
+        year: document.getElementById('paper-year'),
+        citations: document.getElementById('paper-citations'),
+        abstract: document.getElementById('paper-abstract'),
+        keywords: document.getElementById('paper-keywords'),
+        url: document.getElementById('paper-url'),
+        helpfulBtn: document.getElementById('rate-helpful'),
+        notRelevantBtn: document.getElementById('rate-not-relevant'),
+        skipBtn: document.getElementById('skip-paper'),
+        progressSection: document.getElementById('progress-section'),
+        helpfulCount: document.getElementById('helpful-count'),
+        notRelevantCount: document.getElementById('not-relevant-count'),
+        searchQuery: document.getElementById('search-query'),
+        fetchPapersBtn: document.getElementById('fetch-papers-btn'),
+        fetchStatus: document.getElementById('fetch-status')
+    };
+
+    let currentPaper = null;
+
+    const showState = (state) => {
+        ui.loading.classList.add('hidden');
+        ui.error.classList.add('hidden');
+        ui.paperContainer.classList.add('hidden');
+        ui.noPapers.classList.add('hidden');
+        if (state) state.classList.remove('hidden');
+    };
+
+    async function loadUserProfile() {
+        try {
+            const response = await fetch('/api/user-profile');
+            if (!response.ok) throw new Error('Could not load user profile.');
+            
+            const profile = await response.json();
+            ui.helpfulCount.textContent = profile.helpful_papers.length;
+            ui.notRelevantCount.textContent = profile.not_relevant_papers.length;
+            ui.progressSection.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error loading user profile:', error);
+        }
+    }
+
+    async function fetchPaper() {
+        showState(ui.loading);
+        try {
+            const response = await fetch('/api/recommendations');
+            if (response.status === 404) {
+                showState(ui.noPapers);
+                return;
+            }
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || 'Failed to fetch recommendation');
+            }
+            currentPaper = await response.json();
+            displayPaper(currentPaper);
+        } catch (error) {
+            console.error('Error fetching paper:', error);
+            ui.errorMessage.textContent = error.message;
+            showState(ui.error);
+        }
+    }
+
+    function displayPaper(paper) {
+        ui.title.textContent = paper.title;
+        ui.authors.textContent = paper.authors;
+        ui.year.textContent = paper.year;
+        ui.citations.textContent = `${paper.citation_count} citations`;
+        ui.abstract.textContent = paper.abstract;
+        ui.url.href = paper.url;
+        ui.keywords.innerHTML = paper.keywords.map(k => 
+            `<span class="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300">${k}</span>`
+        ).join('');
+        
+        showState(ui.paperContainer);
+        // Trigger animation
+        requestAnimationFrame(() => {
+            ui.paperContainer.style.opacity = '1';
+            ui.paperContainer.style.transform = 'translateY(0)';
+        });
+    }
+
+    async function submitRating(rating) {
+        if (!currentPaper) return;
+        
+        // Add loading state to buttons
+        const buttons = [ui.helpfulBtn, ui.notRelevantBtn, ui.skipBtn];
+        buttons.forEach(btn => btn.disabled = true);
+        
+        try {
+            const formData = new URLSearchParams({ paper_id: currentPaper.id, rating: rating });
+            const response = await fetch('/api/rate-paper', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || 'Failed to submit rating');
+            }
+            window.showSuccess(`Paper marked as ${rating}!`);
+            
+            // Update progress counts
+            await loadUserProfile();
+            
+            // Fade out current paper
+            ui.paperContainer.style.opacity = '0';
+            ui.paperContainer.style.transform = 'translateY(4px)';
+            
+            // Wait for animation to complete
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await fetchPaper();
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            ui.errorMessage.textContent = error.message;
+            showState(ui.error);
+        } finally {
+            buttons.forEach(btn => btn.disabled = false);
+        }
+    }
+
+    async function resetRecommendations() {
+        if (!confirm('Are you sure you want to reset your recommendations? This will clear your ratings history.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-recommendations', { method: 'POST' });
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || 'Failed to reset recommendations');
+            }
+            
+            window.showSuccess('Recommendations reset successfully!');
+            await loadUserProfile();
+            await fetchPaper();
+        } catch (error) {
+            console.error('Error resetting recommendations:', error);
+            window.showError(error.message);
+        }
+    }
+
+    async function fetchNewPapers() {
+        const query = ui.searchQuery.value.trim();
+        if (!query) {
+            window.showError('Please enter a search query');
+            return;
+        }
+
+        ui.fetchPapersBtn.disabled = true;
+        ui.fetchStatus.innerHTML = `
+            <div class="flex items-center text-gray-600 dark:text-gray-400">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 dark:border-primary-400 mr-2"></div>
+                Searching for new papers...
+            </div>
+        `;
+        ui.fetchStatus.classList.remove('hidden');
+
+        try {
+            const formData = new URLSearchParams({
+                query: query,
+                limit: 10
+            });
+
+            const response = await fetch('/api/fetch-new-papers', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || 'Failed to fetch papers');
+            }
+
+            const result = await response.json();
+            
+            if (result.papers.length === 0) {
+                ui.fetchStatus.innerHTML = `
+                    <div class="text-yellow-600 dark:text-yellow-400">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        No new papers found. Try different keywords.
+                    </div>
+                `;
+            } else {
+                ui.fetchStatus.innerHTML = `
+                    <div class="text-green-600 dark:text-green-400">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Added ${result.papers.length} new papers!
+                    </div>
+                `;
+                // Refresh recommendations
+                await fetchPaper();
+            }
+        } catch (error) {
+            console.error('Error fetching papers:', error);
+            ui.fetchStatus.innerHTML = `
+                <div class="text-red-600 dark:text-red-400">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    ${error.message}
+                </div>
+            `;
+        } finally {
+            ui.fetchPapersBtn.disabled = false;
+        }
+    }
+
+    ui.helpfulBtn.addEventListener('click', () => submitRating('helpful'));
+    ui.notRelevantBtn.addEventListener('click', () => submitRating('not_relevant'));
+    ui.skipBtn.addEventListener('click', fetchPaper);
+    ui.retryBtn.addEventListener('click', fetchPaper);
+    ui.fetchPapersBtn.addEventListener('click', fetchNewPapers);
+    ui.searchQuery.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            fetchNewPapers();
+        }
+    });
+
+    // Initial load
+    loadUserProfile();
+    fetchPaper();
+});
+</script>
+{% endblock %}

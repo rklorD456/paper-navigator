@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Notification Container -->
+<div id="notificationContainer" class="fixed top-4 right-4 z-50"></div>
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl">
+        <div class="text-center">
+            <i class="fas fa-book-open text-4xl text-primary-600 dark:text-primary-400 mb-4"></i>
+            <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">
+                Welcome Back
+            </h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Sign in to continue your research journey
+            </p>
+        </div>
+        <form class="mt-8 space-y-6" id="loginForm">
+            <div class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        <input id="email" name="email" type="email" required
+                            class="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                            placeholder="you@example.com"
+                            autocomplete="email">
+                    </div>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input id="password" name="password" type="password" required
+                            class="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                            placeholder="••••••••"
+                            autocomplete="current-password">
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <i class="fas fa-eye text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"></i>
+                        </button>
+                    </div>
+                    <div id="passwordStrength" class="mt-2 hidden">
+                        <div class="flex items-center space-x-2">
+                            <div class="h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div id="strengthBar" class="h-full w-0 transition-all duration-300"></div>
+                            </div>
+                            <span id="strengthText" class="text-xs text-gray-500 dark:text-gray-400"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember_me" name="remember_me" type="checkbox"
+                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
+                    <label for="remember_me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                        Remember me
+                    </label>
+                </div>
+
+                <div class="text-sm">
+                    <a href="/forgot-password" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                        Forgot password?
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" id="loginButton"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-sign-in-alt text-primary-500 group-hover:text-primary-400"></i>
+                    </span>
+                    <span id="buttonText">Sign in</span>
+                    <span id="loadingSpinner" class="hidden">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+
+            <div class="text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Don't have an account?
+                    <a href="/register" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                        Create one now
+                    </a>
+                </p>
+            </div>
+        </form>
+
+        <!-- Keyboard Shortcuts Help -->
+        <div class="mt-4 text-center">
+            <button type="button" id="showShortcuts" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                <i class="fas fa-keyboard mr-1"></i>Keyboard Shortcuts
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Keyboard Shortcuts Modal -->
+<div id="shortcutsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Keyboard Shortcuts</h3>
+            <button type="button" id="closeShortcuts" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="space-y-3">
+            <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Focus Email Field</span>
+                <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">Alt + E</kbd>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Focus Password Field</span>
+                <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">Alt + P</kbd>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Toggle Password Visibility</span>
+                <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">Alt + V</kbd>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Submit Form</span>
+                <kbd class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Notification System
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notificationContainer');
+    const notification = document.createElement('div');
+    
+    // Set notification styles based on type
+    const styles = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+    };
+    
+    notification.className = `text-white px-6 py-3 rounded-lg shadow-lg mb-4 transform transition-all duration-300 ease-in-out ${styles[type]}`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <span class="mr-2">
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' :
+                  type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' :
+                  type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' :
+                  '<i class="fas fa-info-circle"></i>'}
+            </span>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Add to container
+    container.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            container.removeChild(notification);
+        }, 300);
+    }, 5000);
+}
+
+// Password visibility toggle
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+
+// Form validation
+const loginForm = document.getElementById('loginForm');
+const loginButton = document.getElementById('loginButton');
+const buttonText = document.getElementById('buttonText');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const passwordStrength = document.getElementById('passwordStrength');
+const strengthBar = document.getElementById('strengthBar');
+const strengthText = document.getElementById('strengthText');
+
+function setLoading(isLoading) {
+    loginButton.disabled = isLoading;
+    buttonText.classList.toggle('hidden', isLoading);
+    loadingSpinner.classList.toggle('hidden', !isLoading);
+}
+
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function checkPasswordStrength(password) {
+    let strength = 0;
+    const feedback = [];
+
+    if (password.length >= 8) strength += 1;
+    else feedback.push('At least 8 characters');
+
+    if (/[A-Z]/.test(password)) strength += 1;
+    else feedback.push('One uppercase letter');
+
+    if (/[a-z]/.test(password)) strength += 1;
+    else feedback.push('One lowercase letter');
+
+    if (/[0-9]/.test(password)) strength += 1;
+    else feedback.push('One number');
+
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+    else feedback.push('One special character');
+
+    const strengthLevels = {
+        0: { color: 'bg-red-500', text: 'Very Weak' },
+        1: { color: 'bg-red-400', text: 'Weak' },
+        2: { color: 'bg-yellow-500', text: 'Fair' },
+        3: { color: 'bg-yellow-400', text: 'Good' },
+        4: { color: 'bg-green-500', text: 'Strong' },
+        5: { color: 'bg-green-400', text: 'Very Strong' }
+    };
+
+    return {
+        level: strength,
+        color: strengthLevels[strength].color,
+        text: strengthLevels[strength].text,
+        feedback: feedback
+    };
+}
+
+function updatePasswordStrength(password) {
+    if (!password) {
+        passwordStrength.classList.add('hidden');
+        return;
+    }
+
+    const strength = checkPasswordStrength(password);
+    strengthBar.className = `h-full transition-all duration-300 ${strength.color}`;
+    strengthBar.style.width = `${(strength.level / 5) * 100}%`;
+    strengthText.textContent = strength.text;
+    passwordStrength.classList.remove('hidden');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.altKey) {
+        switch(e.key.toLowerCase()) {
+            case 'e':
+                e.preventDefault();
+                document.getElementById('email').focus();
+                break;
+            case 'p':
+                e.preventDefault();
+                document.getElementById('password').focus();
+                break;
+            case 'v':
+                e.preventDefault();
+                document.getElementById('togglePassword').click();
+                break;
+        }
+    }
+});
+
+// Keyboard shortcuts modal
+const shortcutsModal = document.getElementById('shortcutsModal');
+const showShortcuts = document.getElementById('showShortcuts');
+const closeShortcuts = document.getElementById('closeShortcuts');
+
+showShortcuts.addEventListener('click', () => {
+    shortcutsModal.classList.remove('hidden');
+    shortcutsModal.classList.add('flex');
+});
+
+closeShortcuts.addEventListener('click', () => {
+    shortcutsModal.classList.add('hidden');
+    shortcutsModal.classList.remove('flex');
+});
+
+shortcutsModal.addEventListener('click', (e) => {
+    if (e.target === shortcutsModal) {
+        shortcutsModal.classList.add('hidden');
+        shortcutsModal.classList.remove('flex');
+    }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const remember_me = document.getElementById('remember_me').checked;
+    
+    // Validate email
+    if (!validateEmail(email)) {
+        showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+    
+    // Validate password
+    if (password.length < 6) {
+        showNotification('Password must be at least 6 characters long', 'error');
+        return;
+    }
+    
+    setLoading(true);
+    
+    try {
+        // Add timeout to the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password, remember_me }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            const data = await response.json();
+            showNotification('Login successful!', 'success');
+            
+            // Store the token in localStorage for faster subsequent logins
+            if (data.access_token) {
+                localStorage.setItem('auth_token', data.access_token);
+            }
+            
+            // Redirect immediately after successful login
+            window.location.href = '/';
+        } else {
+            const data = await response.json();
+            showNotification(data.detail || 'Login failed', 'error');
+            setLoading(false);
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            showNotification('Login request timed out. Please try again.', 'error');
+        } else {
+            showNotification('An error occurred. Please try again.', 'error');
+        }
+        setLoading(false);
+    }
+});
+
+// Add this function to check for existing session on page load
+async function checkExistingSession() {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        try {
+            const response = await fetch('/api/verify-token', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                // If token is valid, redirect to home page
+                window.location.href = '/';
+            } else {
+                // If token is invalid, remove it
+                localStorage.removeItem('auth_token');
+            }
+        } catch (error) {
+            localStorage.removeItem('auth_token');
+        }
+    }
+}
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', checkExistingSession);
+
+// Add input validation on blur
+document.getElementById('email').addEventListener('blur', function() {
+    if (this.value && !validateEmail(this.value)) {
+        this.classList.add('border-red-500');
+        showNotification('Please enter a valid email address', 'error');
+    } else {
+        this.classList.remove('border-red-500');
+    }
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    updatePasswordStrength(this.value);
+});
+
+document.getElementById('password').addEventListener('blur', function() {
+    if (this.value && this.value.length < 6) {
+        this.classList.add('border-red-500');
+        showNotification('Password must be at least 6 characters long', 'error');
+    } else {
+        this.classList.remove('border-red-500');
+    }
+});
+
+// Remember me functionality
+const rememberMeCheckbox = document.getElementById('remember_me');
+const savedEmail = localStorage.getItem('rememberedEmail');
+
+if (savedEmail) {
+    document.getElementById('email').value = savedEmail;
+    rememberMeCheckbox.checked = true;
+}
+
+rememberMeCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+        localStorage.setItem('rememberedEmail', document.getElementById('email').value);
+    } else {
+        localStorage.removeItem('rememberedEmail');
+    }
+});
+</script>
+{% endblock %} 
